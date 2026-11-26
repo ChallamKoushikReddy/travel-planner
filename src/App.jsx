@@ -1,10 +1,18 @@
 import { useState } from "react";
 import "./App.css";
-
+function DayCard({title,activity}){
+  return(
+    <article className="day-card">
+      <h3>{title}</h3>
+      <p>{activity}</p>
+    </article>
+  );
+}
 function App() {
   const [destination, setDestination] = useState("");
   const [interests, setInterests] = useState("");
   const [trip, setTrip] = useState(null);
+  const [numberOfDays, setNumberOfDays]=useState("3");
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -17,28 +25,31 @@ function App() {
       .split(",")
       .map((interest) => interest.trim())
       .filter((interest) => interest !== "");
+    const itineraryDays=[
+      {
+        title:"Day 1",
+        activity:`Explore the heart of${destination} and try a local restaurant`,
+      },
+      {
+        title:"Day 2",
+        activity:`Spend time enjoying ${interestList[0]||"popular local experiences"}.`,
+      },
+      {
+        title:"Day 3",
+        activity:`Visiting a landmark and enjoy relaxed final evening.`,
+      },
+    ];
 
     setTrip({
       destination: destination,
       interests: interestList,
-      days: [
-        {
-          title: "Day 1",
-          activity: `Explore the heart of ${destination} and try a local restaurant.`,
-        },
-        {
-          title: "Day 2",
-          activity: `Spend time enjoying ${
-            interestList[0] || "popular local experiences"
-          }.`,
-        },
-        {
-          title: "Day 3",
-          activity:
-            "Visit a landmark,enjoy a relaxed final evening.",
-        },
-      ],
+      days: itineraryDays.slice(0,Number(numberOfDays)),
     });
+  }
+  function handleClearTrip(){
+    setTrip(null);
+    setDestination("");
+    setInterests("");
   }
 
   return (
@@ -71,6 +82,17 @@ function App() {
               onChange={(event) => setInterests(event.target.value)}
             />
           </label>
+          <label>
+            How many days?
+            <select
+              value={numberOfDays}
+              onChange={(event)=> setNumberOfDays(event.target.value)}  
+            >
+              <option value="1">1 day</option>
+              <option value="2">2 days</option>
+              <option value="3">3 days</option>
+            </select>
+          </label>
 
           <button type="submit">Plan my trip</button>
         </form>
@@ -87,11 +109,11 @@ function App() {
             </p>
 
             {trip.days.map((day) => (
-              <article className="day-card" key={day.title}>
-                <h3>{day.title}</h3>
-                <p>{day.activity}</p>
-              </article>
+              <DayCard key={day.title}
+                       title={day.title}
+                       activity={day.activity}></DayCard>
             ))}
+            <button type="button" className="clear-button" onClick={handleClearTrip}>Plan another Trip</button>
           </section>
         )}
       </section>
