@@ -1,18 +1,44 @@
 import { useState,useEffect} from "react";
 import "./App.css";
-function DayCard({title,activity}){
+function DayCard({title,date,activity}){
   return(
     <article className="day-card">
       <h3>{title}</h3>
+      <p>{date}</p>
       <p>{activity}</p>
     </article>
   );
 }
+function formatDate(dateString){
+  return new 
+  Date(`${dateString}T00:00:00`).toLocaleDateString("en-IN",{
+    day:"numeric",
+    month:"short",
+    year:"numeric",
+  });
+}
+function formatDayDate(startDate,daysToAdd){
+  const date = new Date(`${startDate}T00:00:00`);
+  date.setDate(date.getDate()+daysToAdd);
+  return date.toLocaleDateString("en-IN",{
+    weekday:"long",
+    day:"numeric",
+    month:"short",
+  });
+
+}
+function getTripLength(startDate, endDate) {
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+  const millisecondsPerDay = 1000 * 60 * 60 * 24;
+
+  return Math.floor((end - start) / millisecondsPerDay) + 1;
+}
+
 function App() {
   const [destination, setDestination] = useState("");
   const [interests, setInterests] = useState("");
   const [trip, setTrip] = useState(null);
-  const [numberOfDays, setNumberOfDays]=useState("3");
   const [error,setError]=useState("");
   const [startDate,setStartDate]=useState("");
   const [endDate,setEndDate]=useState("");
@@ -33,7 +59,7 @@ function App() {
     event.preventDefault();
 
     if (!destination.trim()) {
-      setError("Please enter a destination before planning ypur trip");
+      setError("Please enter a destination before planning your trip");
       return;
     }
     if(!startDate || !endDate){
@@ -42,6 +68,11 @@ function App() {
     }
     if(endDate<startDate){
       setError("Your end date must be after your start day");
+      return;
+    }
+    const tripLength = getTripLength(startDate,endDate);
+    if(tripLength >3){
+      setError("Present working model is for 3 days");
       return;
     }
 
@@ -54,7 +85,7 @@ function App() {
     const itineraryDays=[
       {
         title:"Day 1",
-        activity:`Explore the heart of${destination} and try a local restaurant`,
+        activity:`Explore the heart of ${destination} and try a local restaurant`,
       },
       {
         title:"Day 2",
@@ -65,17 +96,25 @@ function App() {
         activity:`Visiting a landmark and enjoy relaxed final evening.`,
       },
     ];
+    const selectedDays = itineraryDays.slice(0,tripLength).map((day,index) => ({
+      ...day,
+      date:formatDayDate(startDate,index),
+    }));
 
     setTrip({
       destination: destination,
       interests: interestList,
-      days: itineraryDays.slice(0,Number(numberOfDays)),
+      startDate:startDate,
+      endDate: endDate,
+      days: selectedDays,
     });
   }
   function handleClearTrip(){
     setTrip(null);
     setDestination("");
     setInterests("");
+    setStartDate("");
+    setEndDate("");
   }
 
   return (
@@ -127,24 +166,15 @@ function App() {
               onChange={(event) => setInterests(event.target.value)}
             />
           </label>
-          <label>
-            How many days?
-            <select
-              value={numberOfDays}
-              onChange={(event)=> setNumberOfDays(event.target.value)}  
-            >
-              <option value="1">1 day</option>
-              <option value="2">2 days</option>
-              <option value="3">3 days</option>
-            </select>
-          </label>
-
           <button type="submit">Plan my trip</button>
         </form>
 
         {trip && (
           <section className="itinerary">
             <h2>Your trip to {trip.destination}</h2>
+            <p>
+              {formatDate(trip.startDate)} to {formatDate(trip.endDate)}
+            </p>
 
             <p>
               Interests:{" "}
@@ -156,6 +186,7 @@ function App() {
             {trip.days.map((day) => (
               <DayCard key={day.title}
                        title={day.title}
+                       date={day.date}
                        activity={day.activity}></DayCard>
             ))}
             <button type="button" className="clear-button" onClick={handleClearTrip}>Plan another Trip</button>
