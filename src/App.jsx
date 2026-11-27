@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState,useEffect} from "react";
 import "./App.css";
 function DayCard({title,activity}){
   return(
@@ -13,13 +13,39 @@ function App() {
   const [interests, setInterests] = useState("");
   const [trip, setTrip] = useState(null);
   const [numberOfDays, setNumberOfDays]=useState("3");
+  const [error,setError]=useState("");
+  const [startDate,setStartDate]=useState("");
+  const [endDate,setEndDate]=useState("");
+
+  useEffect(()=>
+  {
+    if(trip){
+      document.title= `Trip to ${trip.destination}`;
+    } else{
+      document.title="Travel Planner";
+    }
+
+  },[trip]
+  );
+
 
   function handleSubmit(event) {
     event.preventDefault();
 
     if (!destination.trim()) {
+      setError("Please enter a destination before planning ypur trip");
       return;
     }
+    if(!startDate || !endDate){
+      setError("Please select a start and end date");
+      return;
+    }
+    if(endDate<startDate){
+      setError("Your end date must be after your start day");
+      return;
+    }
+
+    setError("");
 
     const interestList = interests
       .split(",")
@@ -55,12 +81,13 @@ function App() {
   return (
     <main className="page">
       <section className="planner">
-        <p className="eyebrow">Your next adventure</p>
+        <p className="eyebrow">Your Next Memory</p>
         <h1>Plan your next trip</h1>
 
         <p className="intro">
           Tell us what you're looking for and we will build an itinerary.
         </p>
+        {error && <p className="error-class">{error}</p>}
 
         <form className="trip-form" onSubmit={handleSubmit}>
           <label>
@@ -70,6 +97,24 @@ function App() {
               placeholder="e.g. Tokyo"
               value={destination}
               onChange={(event) => setDestination(event.target.value)}
+            />
+          </label>
+          <label>
+            Start date
+            <input
+              type="date"
+              value={startDate}
+              onChange = {(event)=> setStartDate(event.target.value)}
+            />
+          </label>
+
+          <label>
+            End date
+            <input
+              type="date"
+              value={endDate}
+              min={startDate}
+              onChange= {(event)=> setEndDate(event.target.value)}
             />
           </label>
 
