@@ -38,7 +38,15 @@ function getTripLength(startDate, endDate) {
 function App() {
   const [destination, setDestination] = useState("");
   const [interests, setInterests] = useState("");
-  const [trip, setTrip] = useState(null);
+  const [trip, setTrip] = useState(()=>{
+    const savedTrip = localStorage.getItem("current-trip");
+    return savedTrip?JSON.parse(savedTrip):null;
+  });
+  const [savedTrips,setSavedTrips]=useState(()=>{
+    const storedTrips = localStorage.getItem("saved-trips");
+    return storedTrips?JSON.parse(storedTrips):[];
+  });
+  const [showSavedTrips,setShowSavedTrips]=useState(false);
   const [error,setError]=useState("");
   const [startDate,setStartDate]=useState("");
   const [endDate,setEndDate]=useState("");
@@ -46,13 +54,19 @@ function App() {
   useEffect(()=>
   {
     if(trip){
+      localStorage.setItem("current-trip",JSON.stringify(trip));
       document.title= `Trip to ${trip.destination}`;
+
     } else{
+      localStorage.removeItem("current-trip");
       document.title="Travel Planner";
     }
 
   },[trip]
   );
+  useEffect(()=>{
+    localStorage.setItem("saved-trips",JSON.stringify(savedTrips));
+  },[savedTrips]);
 
 
   function handleSubmit(event) {
@@ -100,7 +114,7 @@ function App() {
       ...day,
       date:formatDayDate(startDate,index),
     }));
-
+    setShowSavedTrips(false);
     setTrip({
       destination: destination,
       interests: interestList,
@@ -116,6 +130,25 @@ function App() {
     setStartDate("");
     setEndDate("");
   }
+  function handleSaveTrip(){
+    if(!trip){
+      return;
+    }
+  
+  const tripToSave = {
+    ...trip,
+    id:crypto.randomUUID(),
+  };
+  setSavedTrips((currentTrips)=>[
+    ...currentTrips,
+    tripToSave,
+  ]);
+  setShowSavedTrips(false);
+}
+function handleShowSavedTrips(){
+  handleClearTrip();
+  setShowSavedTrips(true);
+}
 
   return (
     <main className="page">
@@ -168,6 +201,14 @@ function App() {
           </label>
           <button type="submit">Plan my trip</button>
         </form>
+        {savedTrips.length>0 && !showSavedTrips &&(
+          <button
+            type="button"
+            className="show-saved-button"
+            onClick={handleShowSavedTrips}>
+              Display wishlist
+              </button>
+        )}
 
         {trip && (
           <section className="itinerary">
@@ -190,6 +231,21 @@ function App() {
                        activity={day.activity}></DayCard>
             ))}
             <button type="button" className="clear-button" onClick={handleClearTrip}>Plan another Trip</button>
+            <button type="button" className="save-button" onClick={handleSaveTrip}> Add to WishList</button>
+          </section>
+        )}
+        {showSavedTrips && savedTrips.length>0 && (
+          <section className="saved-trips">
+            <h2>Saved Trips</h2>
+            {savedTrips.map((savedTrip)=>(
+              <article className="saved-trip-card" key={savedTrip.id}>
+                <h3>{savedTrip.destination}</h3>
+                <p>
+                  {formatDate(savedTrip.startDate)} to{" "}
+                  {formatDate(savedTrip.endDate)}
+                </p>
+              </article>
+            ))}
           </section>
         )}
       </section>
